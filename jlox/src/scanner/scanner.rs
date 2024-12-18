@@ -22,9 +22,16 @@ impl Scanner {
         let mut line = 1;
 
         while let Some(&_c) = chars.peek() {
-            if let Some(token) = self.scan_token(&mut chars, &mut line) {
-                if token.token_type != TokenType::Eof {
-                    tokens.push(token);
+            match self.scan_token(&mut chars, &mut line) {
+                Ok(Some(token)) => {
+                    if token.token_type != TokenType::Eof {
+                        tokens.push(token);
+                    }
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    crate::errors::generic_error::error(line, &e);
+                    break;
                 }
             }
             chars.next(); // Consume the character
@@ -38,54 +45,54 @@ impl Scanner {
         &self,
         chars: &mut std::iter::Peekable<std::str::Chars>,
         line: &mut usize,
-    ) -> Option<Token> {
+    ) -> Result<Option<Token>, String> {
         while let Some(&c) = chars.peek() {
             match c {
-                '(' => return Some(self.make_token(TokenType::LeftParen, chars, line)),
-                ')' => return Some(self.make_token(TokenType::RightParen, chars, line)),
-                '{' => return Some(self.make_token(TokenType::LeftBrace, chars, line)),
-                '}' => return Some(self.make_token(TokenType::RightBrace, chars, line)),
-                ',' => return Some(self.make_token(TokenType::Comma, chars, line)),
-                '.' => return Some(self.make_token(TokenType::Dot, chars, line)),
-                '-' => return Some(self.make_token(TokenType::Minus, chars, line)),
-                '+' => return Some(self.make_token(TokenType::Plus, chars, line)),
-                ';' => return Some(self.make_token(TokenType::Semicolon, chars, line)),
-                '*' => return Some(self.make_token(TokenType::Star, chars, line)),
+                '(' => return Ok(Some(self.make_token(TokenType::LeftParen, chars, line))),
+                ')' => return Ok(Some(self.make_token(TokenType::RightParen, chars, line))),
+                '{' => return Ok(Some(self.make_token(TokenType::LeftBrace, chars, line))),
+                '}' => return Ok(Some(self.make_token(TokenType::RightBrace, chars, line))),
+                ',' => return Ok(Some(self.make_token(TokenType::Comma, chars, line))),
+                '.' => return Ok(Some(self.make_token(TokenType::Dot, chars, line))),
+                '-' => return Ok(Some(self.make_token(TokenType::Minus, chars, line))),
+                '+' => return Ok(Some(self.make_token(TokenType::Plus, chars, line))),
+                ';' => return Ok(Some(self.make_token(TokenType::Semicolon, chars, line))),
+                '*' => return Ok(Some(self.make_token(TokenType::Star, chars, line))),
                 '!' => {
-                    return Some(self.match_token(
+                    return Ok(Some(self.match_token(
                         '=',
                         TokenType::BangEqual,
                         TokenType::Bang,
                         chars,
                         line,
-                    ))
+                    )))
                 }
                 '=' => {
-                    return Some(self.match_token(
+                    return Ok(Some(self.match_token(
                         '=',
                         TokenType::EqualEqual,
                         TokenType::Equal,
                         chars,
                         line,
-                    ))
+                    )))
                 }
                 '<' => {
-                    return Some(self.match_token(
+                    return Ok(Some(self.match_token(
                         '=',
                         TokenType::LessEqual,
                         TokenType::Less,
                         chars,
                         line,
-                    ))
+                    )))
                 }
                 '>' => {
-                    return Some(self.match_token(
+                    return Ok(Some(self.match_token(
                         '=',
                         TokenType::GreaterEqual,
                         TokenType::Greater,
                         chars,
                         line,
-                    ))
+                    )))
                 }
                 '/' => {
                     chars.next();
@@ -97,7 +104,12 @@ impl Scanner {
                             chars.next();
                         }
                     } else {
-                        return Some(Token::new(TokenType::Slash, "/".to_string(), None, *line));
+                        return Ok(Some(Token::new(
+                            TokenType::Slash,
+                            "/".to_string(),
+                            None,
+                            *line,
+                        )));
                     }
                 }
                 '\n' => {
@@ -107,19 +119,19 @@ impl Scanner {
                 ' ' | '\r' | '\t' => {
                     chars.next();
                 }
-                '"' => return Some(self.string(chars, line)),
+                '"' => return Ok(Some(self.string(chars, line))),
                 _ => {
-                    if c.is_alphabetic() {
-                        return Some(self.identifier(chars, line));
+                    return if c.is_alphabetic() {
+                        Ok(Some(self.identifier(chars, line)))
                     } else if c.is_ascii_digit() {
-                        return Some(self.number(chars, line));
+                        Ok(Some(self.number(chars, line)))
                     } else {
-                        chars.next();
+                        Err(format!("Unexpected character: {}", c))
                     }
                 }
             }
         }
-        None
+        Ok(None)
     }
 
     fn match_token(

@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::io::{self, BufRead, Write};
 
 mod argparser;
+mod errors;
 mod scanner;
 mod utils;
 
