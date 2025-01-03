@@ -5,6 +5,9 @@ mod argparser;
 mod errors;
 mod scanner;
 mod utils;
+mod expression;
+mod ast;
+mod parser;
 
 use argparser::argparser::parse_args;
 use scanner::scanner::run;

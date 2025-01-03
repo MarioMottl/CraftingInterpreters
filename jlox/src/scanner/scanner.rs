@@ -1,3 +1,5 @@
+use crate::ast::ast_printer::AstPrinter;
+use crate::parser::parser::Parser;
 use crate::scanner::token::{Token, TokenType};
 use std::cmp::PartialEq;
 
@@ -230,7 +232,14 @@ pub fn run(source: String) {
     let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens();
 
-    // For now, just print the tokens.
+    let mut parser = Parser::new(tokens.clone());
+    if let Some(expression) = parser.parse() {
+        let mut printer = AstPrinter::new();
+        println!("\nAST: {}", printer.print(&expression));
+    }
+
+    // Keep token printing for debugging
+    println!("\nTokens:");
     for token in tokens {
         println!("{:?}", token);
     }
