@@ -8,10 +8,11 @@ pub enum Expr {
     },
     Literal {
         value: Token,
-}
+    },
 }
 
 impl Expr {
+    #[allow(dead_code)]
     pub fn binary(left: Expr, operator: Token, right: Expr) -> Expr {
         Expr::Binary {
             left: Box::new(left),
@@ -29,10 +30,13 @@ pub trait ExprVisitor<R> {
 impl Expr {
     pub fn accept<R>(&self, visitor: &mut dyn ExprVisitor<R>) -> R {
         match self {
-            Expr::Binary { left, operator, right } => {
-                visitor.visit_binary_expr(left, operator, right)
-            },
-            Expr::Literal { value } => visitor.visit_literal_expr(&value)
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            } => visitor.visit_binary_expr(left, operator, right),
+            Expr::Literal { value } => visitor.visit_literal_expr(value),
         }
     }
 }
+
